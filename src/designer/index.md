@@ -17,6 +17,27 @@ export default () => (
         style={{
             height: 500,
         }}
+        data={[{
+            className: 'Layer',
+            attrs: {
+                id: 'layer-0'
+            },
+            children: [{
+                className: 'Circle',
+                attrs: {
+                    id: '0',
+                    x: 100,
+                    y: 100
+                }
+            }, {
+                className: 'Circle',
+                attrs: {
+                    id: '1',
+                    x: 500,
+                    y: 200
+                }
+            }]
+        }]}
     />
 );
 ```
