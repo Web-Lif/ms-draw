@@ -17,34 +17,16 @@ export default () => (
         style={{
             height: 500,
         }}
-        data={[{
-            className: 'Layer',
-            attrs: {
-                id: 'layer-0'
-            },
-            children: [{
-                className: 'Circle',
-                attrs: {
-                    id: '0',
-                    x: 100,
-                    y: 100
-                }
-            }, {
-                className: 'Circle',
-                attrs: {
-                    id: '1',
-                    x: 500,
-                    y: 200
-                }
-            },{
-                className: 'Circle',
-                attrs: {
-                    id: '2',
-                    x: 300,
-                    y: 200
-                }
+        data={{
+            shape: [{
+                type: 'Circle',
+                id: '0',
+                x: 200,
+                y: 100,
+                width: 100,
+                height: 100
             }]
-        }]}
+        }}
     />
 );
 ```

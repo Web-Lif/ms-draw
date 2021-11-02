@@ -1,7 +1,8 @@
-import React, { FC, useEffect, useRef, useState } from 'react'
+import React, { FC, useEffect, useRef, useState, ReactNode } from 'react'
 import { Stage, Circle, Layer } from 'react-konva'
 import styled from 'styled-components'
 import Konva from 'konva'
+import shortid from 'shortid'
 
 import useShape from './hooks/useShape'
 
@@ -13,14 +14,36 @@ const Container = styled.div`
     border: 1px solid #ebedf1;
 `;
 
+
+
+interface Arrow {
+    id: string
+    source: number[]
+    target: number[]
+}
+
+interface Shape {
+    type: 'Circle'
+    id: string
+    x: number
+    y: number
+    height: number
+    width: number
+}
+
+interface DesignerData {
+    arrows: Arrow[]  
+    shape: Shape[] 
+}
+
 interface DesignerProps extends React.HTMLAttributes<HTMLDivElement> {
-    data: object
+    data: DesignerData
     debug: boolean
 }
 
-
 const Designer: FC<DesignerProps> = ({
     debug,
+    data,
     ...restProps
 }) => {
     const [size, setSize] = useState<{
@@ -48,8 +71,6 @@ const Designer: FC<DesignerProps> = ({
     }, []);
 
 
-
-
     const [selectd, setSelectd] = useState<string>('')
     const [hover, setHover] = useState<string>('')
 
@@ -61,19 +82,31 @@ const Designer: FC<DesignerProps> = ({
         history.current.push(stage.toObject())
     }
 
-    const data = useShape({
-        selectd,
-        hover,
-        setSelectd,
-        addHistory,
-        shape: (
-            <Circle
-                x={200}
-                y={100}
-                radius={50}
-                stroke='black'
-            />
-        )
+    const shapes: ReactNode[] = []
+    data.shape.forEach((ele) => {
+        let shape
+        const key = shortid.generate()
+        if (ele.type === 'Circle') {
+            shape = useShape({
+                selectd,
+                hover,
+                setSelectd,
+                addHistory,
+                shape: (
+                    <Circle
+                        id={ele.id || key}
+                        key={ele.id || key}
+                        x={ele.x}
+                        y={ele.y}
+                        width={ele.width}
+                        height={ele.height}
+                        stroke='black'
+                    />
+                )
+            })
+
+        }
+        shapes.push(shape)
     })
 
     const onClickIdleAreaEvent = (e: Konva.KonvaEventObject<TouchEvent | MouseEvent>) => {
@@ -133,7 +166,7 @@ const Designer: FC<DesignerProps> = ({
                 <Layer
                     ref={layerRef}
                 >
-                    {data}
+                    {shapes}
                 </Layer>
             </Stage>
         </Container>

@@ -75,6 +75,7 @@ const useShape = ({
         <Group
             name={id.current}
             draggable={draggable}
+            key={`group-${id.current}`}
             onDragEnd={(e) => {
                 addHistory(e.target.getStage()!)
             }}
@@ -82,6 +83,7 @@ const useShape = ({
             {cloneElement(shape, {
                 ref: shapeRef,
                 id: id.current,
+                key: shape.key,
                 name: id.current,
                 shadowBlur: shapeProps.shadowBlur || 1,
                 onMouseOver: (e: any) => {
