@@ -1,6 +1,6 @@
 ---
 nav:
-    title: Components
+    title: 设计器
     path: /components
 ---
 
@@ -34,6 +34,13 @@ export default () => (
                 attrs: {
                     id: '1',
                     x: 500,
+                    y: 200
+                }
+            },{
+                className: 'Circle',
+                attrs: {
+                    id: '2',
+                    x: 300,
                     y: 200
                 }
             }]
