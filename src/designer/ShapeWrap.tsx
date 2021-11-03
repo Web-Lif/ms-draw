@@ -13,7 +13,8 @@ interface ShapeParam {
     selectd: boolean;
     onChange: (data: { x?: number; y?: number; selectd?: boolean }) => void;
     children: JSX.Element;
-    onClickConnect?: (id: string, index: number) => void;
+    onClickConnectDown?: (id: string, index: number) => void;
+    onClickConnectUp?: (id: string, index: number) => void;
 }
 
 const ShapeWrap = ({
@@ -23,7 +24,8 @@ const ShapeWrap = ({
     type,
     selectd,
     onChange,
-    onClickConnect,
+    onClickConnectDown,
+    onClickConnectUp,
 }: ShapeParam) => {
     const shapeProps = children.props;
 
@@ -132,7 +134,11 @@ const ShapeWrap = ({
                     fill="#fff"
                     onMouseDown={(e) => {
                         const id = e.target.name();
-                        onClickConnect?.(id, index);
+                        onClickConnectDown?.(id, index);
+                    }}
+                    onMouseUp={(e) => {
+                        const id = e.target.name();
+                        onClickConnectUp?.(id, index);
                     }}
                     onMouseEnter={(e) => {
                         e.target.getStage()!.container().style.cursor =

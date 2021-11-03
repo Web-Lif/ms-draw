@@ -13,32 +13,43 @@ import React, { useState } from 'react';
 import { Designer } from 'ms-draw';
 
 export default () => {
-    const [debug, setDebug] = useState<boolean>(false)
+    const [debug, setDebug] = useState<boolean>(false);
     const [data, setData] = useState({
-        shape: [{
-            type: 'Circle',
-            id: '0',
-            x: 200,
-            y: 100,
-            width: 100,
-            height: 100,
-        },{
-            type: 'Circle',
-            id: '2',
-            x: 0,
-            y: 0,
-            width: 100,
-            height: 100,
-        }]
-    })
+        shape: [
+            {
+                type: 'Circle',
+                id: '0',
+                x: 200,
+                y: 100,
+                width: 100,
+                height: 100,
+            },
+            {
+                type: 'Circle',
+                id: '2',
+                x: 0,
+                y: 0,
+                width: 100,
+                height: 100,
+            },
+            {
+                type: 'Circle',
+                id: '3',
+                x: 0,
+                y: 0,
+                width: 100,
+                height: 100,
+            },
+        ],
+    });
     return (
         <>
             <button
                 onClick={() => {
-                    setDebug(!debug)
+                    setDebug(!debug);
                 }}
             >
-                {debug ? '关闭调试': '开启调试'}
+                {debug ? '关闭调试' : '开启调试'}
             </button>
             <Designer
                 debug={debug}
@@ -47,11 +58,11 @@ export default () => {
                 }}
                 data={data}
                 onChange={(changeData) => {
-                    setData(changeData)
+                    setData(changeData);
                 }}
             />
         </>
-    )
+    );
 };
 ```
 

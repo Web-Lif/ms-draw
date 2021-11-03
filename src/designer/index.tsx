@@ -12,7 +12,12 @@ import Konva from 'konva';
 import shortid from 'shortid';
 
 import ShapeWrap from './ShapeWrap';
-import { ArrowPosition, DesignerData, Shape } from '../types';
+import {
+    ArrowPosition,
+    DesignerData,
+    Shape,
+    Arrow as ArrowType,
+} from '../types';
 import { getCircle } from '../utils/rough';
 import { getConnectPoint } from '../utils/connect';
 import Image from './Image';
@@ -113,7 +118,7 @@ const Designer: FC<DesignerProps> = ({
                             }
                             onChange({ ...data });
                         }}
-                        onClickConnect={(id, index) => {
+                        onClickConnectDown={(id, index) => {
                             data.arrows.push({
                                 id: shortid.generate(),
                                 source: {
@@ -123,6 +128,16 @@ const Designer: FC<DesignerProps> = ({
                                 state: 'draw',
                             });
                         }}
+                        onClickConnectUp={(id, index) => {
+                            data.arrows.forEach((ele) => {
+                                if (ele.state === 'draw') {
+                                    ele.target = {
+                                        id,
+                                        junction: index,
+                                    };
+                                }
+                            });
+                        }}
                     >
                         <Image
                             id={ele.id || key}
@@ -130,7 +145,6 @@ const Designer: FC<DesignerProps> = ({
                             width={ele.width}
                             height={ele.height}
                             url={getCircle(ele.width, ele.height)}
-                            // stroke='black'
                         />
                     </ShapeWrap>,
                 );
@@ -139,45 +153,187 @@ const Designer: FC<DesignerProps> = ({
         return shapeElements;
     }, [data]);
 
+    // 计算折线的坐标
+    const getArrowLinkPath = (arrow: ArrowType) => {
+        const getPoints = (arrowPosition: ArrowPosition) => {
+            const findEle = stageRef.current?.findOne(`#${arrowPosition.id}`)!;
+            const element = data.shape.find(
+                (ele) => ele.id == arrowPosition.id,
+            );
+            const connectPoint = getConnectPoint(findEle, element!.type!)[
+                arrowPosition.junction
+            ];
+            return [element!.x + connectPoint.x, element!.y + connectPoint.y];
+        };
+
+        const getSourcePoint = () => getPoints(arrow.source);
+
+        const getTargetPoint = () => {
+            if (Array.isArray(arrow.target)) {
+                return arrow.target;
+            } else if (arrow.target) {
+                return getPoints(arrow.target);
+            }
+            return [];
+        };
+
+        const source = getSourcePoint();
+        const target = getTargetPoint();
+        const sx = source[0];
+        const sy = source[1];
+
+        const tx = target[0];
+        const ty = target[1];
+
+        if (source?.length >= 2 && target?.length >= 2) {
+            const points: number[] = [];
+            points.push(...source);
+
+            /**
+             *  对应的坐标信息
+             *
+             *      0  |  1
+             *     ----|-----
+             *      3  |  2
+             *
+             */
+            const getDirection = (coordinate: number[]): 0 | 1 | 2 | 3 => {
+                const sourceX = coordinate[0];
+                const sourceY = coordinate[1];
+
+                const targetX = coordinate[2];
+                const targetY = coordinate[3];
+
+                if (sourceX > targetX && sourceY > targetY) {
+                    return 2;
+                } else if (sourceX < targetX && sourceY < targetY) {
+                    return 0;
+                } else if (sourceX > targetX && sourceY < targetY) {
+                    return 1;
+                } else if (sourceX < targetX && sourceY > targetY) {
+                    return 3;
+                }
+                return 0;
+            };
+
+            const direction = getDirection([...source, ...target]);
+
+            if (!Array.isArray(arrow.target)) {
+                const arrowTarget = arrow.target as ArrowPosition;
+                const { height, width } = data.shape.find(
+                    (ele) => arrowTarget?.id === ele.id,
+                )!;
+                const offset = 20;
+                if (arrow.source.junction === 0) {
+                    if (arrow.target?.junction === 0) {
+                        if (direction === 2 || direction === 3) {
+                            points.push(sx, ty - offset, tx, ty - offset);
+                        } else {
+                            points.push(sx, sy - offset, tx, sy - offset);
+                        }
+                    } else if (arrow.target?.junction === 1) {
+                        if (direction === 1) {
+                            points.push(
+                                sx,
+                                sy - offset,
+                                sx - offset - width / 2,
+                                sy - offset,
+                                sx - offset - width / 2,
+                                ty,
+                            );
+                        } else if (direction === 2) {
+                            points.push(sx, ty);
+                        } else if (direction == 3) {
+                            points.push(
+                                sx,
+                                ty - offset - height / 2,
+                                tx + offset,
+                                ty - offset - height / 2,
+                                tx + offset,
+                                ty,
+                            );
+                        } else if (direction === 0) {
+                            points.push(
+                                sx,
+                                sy - offset,
+                                tx + offset,
+                                sy - offset,
+                                tx + offset,
+                                ty,
+                            );
+                        }
+                    } else if (arrow.target?.junction === 2) {
+                        if (direction === 2 || direction === 3) {
+                            points.push(sx, sy - offset, tx, sy - offset);
+                        } else if (direction === 0) {
+                            points.push(
+                                sx,
+                                sy - offset,
+                                sx + width / 2 + offset,
+                                sy - offset,
+                                sx + width / 2 + offset,
+                                ty + offset,
+                                tx,
+                                ty + offset,
+                            );
+                        } else if (direction === 1) {
+                            points.push(
+                                sx,
+                                sy - offset,
+                                sx - width / 2 - offset,
+                                sy - offset,
+                                sx - width / 2 - offset,
+                                ty + offset,
+                                tx,
+                                ty + offset,
+                            );
+                        }
+                    } else if (arrow.target?.junction === 3) {
+                        if (direction === 3) {
+                            points.push(sx, ty);
+                        } else if (direction === 2) {
+                            points.push(
+                                sx,
+                                sy - offset,
+                                sx - width / 2 - offset,
+                                sy - offset,
+                                sx - width / 2 - offset,
+                                sy - offset + height / 2,
+                                tx - offset,
+                                sy - offset + height / 2,
+                                tx - offset,
+                                ty,
+                            );
+                        } else if (direction === 1 || direction === 0) {
+                            points.push(
+                                sx,
+                                sy - offset,
+                                tx - offset,
+                                sy - offset,
+                                tx - offset,
+                                ty,
+                            );
+                        }
+                    }
+                }
+            }
+
+            points.push(...target);
+            return points;
+        }
+        return [...source, ...target];
+    };
     const arrowNodes = useMemo(() => {
         const arrows: ReactNode[] = [];
         if (!data.arrows) {
             data.arrows = [];
         }
         data.arrows.forEach((ele) => {
-            const { source, target, id } = ele;
-
-            const getPoints = (arrowPosition: ArrowPosition) => {
-                const findEle = stageRef.current?.findOne(
-                    `#${arrowPosition.id}`,
-                )!;
-                const element = data.shape.find(
-                    (ele) => ele.id == arrowPosition.id,
-                );
-                const connectPoint = getConnectPoint(findEle, element!.type!)[
-                    arrowPosition.junction
-                ];
-                return [
-                    element!.x + connectPoint.x,
-                    element!.y + connectPoint.y,
-                ];
-            };
-
-            const getSourcePoint = () => getPoints(source);
-
-            const getTargetPoint = () => {
-                if (Array.isArray(target)) {
-                    return target;
-                } else if (target) {
-                    return getPoints(target);
-                }
-                return [];
-            };
-
+            const { id } = ele;
             arrows.push(
                 <Arrow
                     id={id}
-                    points={[...getSourcePoint(), ...getTargetPoint()]}
+                    points={getArrowLinkPath(ele)}
                     fill="black"
                     stroke="black"
                     key={id}
