@@ -1,11 +1,14 @@
-import React, { FC, useEffect, useRef, useState, ReactNode } from 'react'
-import { Stage, Circle, Layer } from 'react-konva'
+import React, { FC, useEffect, useRef, useState, ReactNode, useMemo } from 'react'
+import { Stage, Layer, Arrow } from 'react-konva'
 import styled from 'styled-components'
 import Konva from 'konva'
 import shortid from 'shortid'
 
-import useShape from './hooks/useShape'
-
+import ShapeWrap from './ShapeWrap'
+import { ArrowPosition, DesignerData, Shape } from '../types'
+import { getCircle } from '../utils/rough'
+import { getConnectPoint } from '../utils/connect'
+import Image from './Image'
 
 const Container = styled.div`
     display: flex;
@@ -15,37 +18,19 @@ const Container = styled.div`
 `;
 
 
-
-interface Arrow {
-    id: string
-    source: number[]
-    target: number[]
-}
-
-interface Shape {
-    type: 'Circle'
-    id: string
-    x: number
-    y: number
-    height: number
-    width: number
-}
-
-interface DesignerData {
-    arrows: Arrow[]  
-    shape: Shape[] 
-}
-
-interface DesignerProps extends React.HTMLAttributes<HTMLDivElement> {
+interface DesignerProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'onChange'> {
     data: DesignerData
     debug: boolean
+    onChange: (data: DesignerData) => void
 }
 
 const Designer: FC<DesignerProps> = ({
     debug,
     data,
+    onChange,
     ...restProps
 }) => {
+
     const [size, setSize] = useState<{
         width: number;
         height: number;
@@ -58,61 +43,147 @@ const Designer: FC<DesignerProps> = ({
     const stageRef = useRef<Konva.Stage>(null)
     const layerRef = useRef<Konva.Layer>(null)
 
-    const history = useRef<object[]>([])
-
     useEffect(() => {
         setSize({
             width: ref.current?.offsetWidth || 0,
             height: ref.current?.offsetHeight || 0,
         });
-        if (debug) {
-            layerRef.current?.toggleHitCanvas()
-        }
     }, []);
 
 
-    const [selectd, setSelectd] = useState<string>('')
-    const [hover, setHover] = useState<string>('')
-
-    // 添加到历史记录
-    const addHistory = (stage: Konva.Stage) => {
-        if (history.current.length > 100) {
-            history.current.splice(0, 1)
+    const isInit = useRef<boolean>(false)
+    useEffect(() => {
+        if (isInit.current) {
+            layerRef.current?.toggleHitCanvas()
         }
-        history.current.push(stage.toObject())
-    }
+        isInit.current = true
+    }, [debug])
 
-    const shapes: ReactNode[] = []
-    data.shape.forEach((ele) => {
-        let shape
-        const key = shortid.generate()
-        if (ele.type === 'Circle') {
-            shape = useShape({
-                selectd,
-                hover,
-                setSelectd,
-                addHistory,
-                shape: (
-                    <Circle
-                        id={ele.id || key}
-                        key={ele.id || key}
+
+    const shapesNodes = useMemo(() => {
+        const selectShape: Shape[] = []
+        const shapes: Shape[] = []
+
+        data.shape.forEach(ele => {
+            if (ele.selectd) {
+                selectShape.push(ele)
+            } else {
+                shapes.push(ele)
+            }
+        })
+
+        if (selectShape.length > 0) {
+            selectShape.forEach(ele => {
+                shapes.push(ele)
+            })
+        }
+
+        const shapeElements: ReactNode[] = []
+
+        shapes.forEach((ele) => {
+            const key = shortid.generate()
+            if (ele.type === 'Circle') {
+                shapeElements.push((
+                    <ShapeWrap
+                        key={ele.id}
                         x={ele.x}
                         y={ele.y}
-                        width={ele.width}
-                        height={ele.height}
-                        stroke='black'
-                    />
-                )
-            })
+                        type={ele.type}
+                        selectd={ele.selectd || false}
+                        onChange={(shapeChange) => {
+                            const changeDataIndex = data.shape.findIndex(shape => shape.id === ele.id)
+                            if (shapeChange.selectd) {
+                                data.shape.forEach(ele => {
+                                    ele.selectd = false
+                                })
+                            }
 
+                            if (changeDataIndex !== -1) {
+                                data.shape[changeDataIndex] = {
+                                    ...data.shape[changeDataIndex],
+                                    ...shapeChange
+                                }
+                            }
+                            onChange({ ...data })
+                        }}
+                        onClickConnect={(id, index) => {
+                            data.arrows.push({
+                                id: shortid.generate(),
+                                source: {
+                                    id,
+                                    junction: index
+                                },
+                                state: 'draw'
+                            })
+                        }}
+                    >
+                        <Image
+                            id={ele.id || key}
+                            key={ele.id || key}
+                            width={ele.width}
+                            height={ele.height}
+                            url={getCircle(ele.width, ele.height)}
+                            // stroke='black'
+                        />
+                    </ShapeWrap>
+                ))
+            }
+        })
+        return shapeElements
+    }, [data])
+
+    const arrowNodes = useMemo(() => {
+        const arrows: ReactNode[] = []
+        if (!data.arrows) {
+            data.arrows = []
         }
-        shapes.push(shape)
-    })
+        data.arrows.forEach(ele => {
+            const {
+                source,
+                target,
+                id
+            } = ele
+
+            const getPoints = (arrowPosition: ArrowPosition) => {
+                const findEle = stageRef.current?.findOne(`#${arrowPosition.id}`)!
+                const element = data.shape.find(ele => ele.id == arrowPosition.id)
+                const connectPoint = getConnectPoint(findEle, element!.type!)[arrowPosition.junction]
+                return [element!.x + connectPoint.x, element!.y + connectPoint.y]
+            }
+
+            const getSourcePoint = () => getPoints(source)
+
+            const getTargetPoint = () => {
+                if (Array.isArray(target)) {
+                    return target
+                } else if (target){
+                    return getPoints(target)
+                }
+                return []
+            }
+
+            arrows.push(
+                <Arrow
+                    points={[...getSourcePoint(), ...getTargetPoint()]}
+                    fill="black"
+                    stroke="black"
+                    key={id}
+                    strokeWidth={2}
+                />
+            )
+
+        })
+        return arrows
+    },[data])
+
 
     const onClickIdleAreaEvent = (e: Konva.KonvaEventObject<TouchEvent | MouseEvent>) => {
         const clickedOnEmpty = e.target === e.target.getStage();
         if (clickedOnEmpty) {
-            setSelectd('');
+            data.shape.forEach(ele => {
+                ele.selectd = false
+            })
+            onChange({ ...data })
         }
     }
 
@@ -150,14 +221,20 @@ const Designer: FC<DesignerProps> = ({
                 height={size.height}
                 onMouseDown={onClickIdleAreaEvent}
                 onTouchStart={onClickIdleAreaEvent}
+                onMouseUp={() => {
+                    data.arrows.forEach(ele => {
+                        ele.state = 'finish'
+                    })
+                    onChange({ ...data })
+                }}
                 onMouseMove={(e) => {
-                    const isMoveEmpty = e.target === e.target.getStage();
-                    if (isMoveEmpty) {
-                        e.target.getStage()!.container().style.cursor = 'default';
-                        setHover('')
-                    } else {
-                        setHover(e.target.name())
-                    }
+                    const {x, y} = e.target.getStage()!.getPointerPosition()!
+                    data.arrows.forEach(ele => {
+                        if (ele.state === 'draw') {
+                            ele.target = [x, y]
+                        }
+                    })
+                    onChange?.({...data})
                 }}
                 onWheel={(e) => {
                     // zoom(1.03, e.evt.deltaY)
@@ -166,7 +243,8 @@ const Designer: FC<DesignerProps> = ({
                 <Layer
                     ref={layerRef}
                 >
-                    {shapes}
+                    {shapesNodes}
+                    {arrowNodes}
                 </Layer>
             </Stage>
         </Container>
