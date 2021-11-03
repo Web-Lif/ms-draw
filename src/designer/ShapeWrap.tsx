@@ -105,12 +105,12 @@ const ShapeWrap = ({
                 })
             }}
             onClick={(e) => {
-                console.log(e.target.x(), e.target.y())
                 onChange({
                     selectd: true
                 })
             }}
-            onMouseLeave={() => {
+            onMouseLeave={(e) => {
+                e.target.getStage()!.container().style.cursor = 'default';
                 setHoverConnectPoint(false)
             }}
         > 
