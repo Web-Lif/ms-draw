@@ -1,27 +1,35 @@
-import React, { FC, useEffect, useRef, useState, ReactNode, useMemo } from 'react'
-import { Stage, Layer, Arrow } from 'react-konva'
-import styled from 'styled-components'
-import Konva from 'konva'
-import shortid from 'shortid'
+import React, {
+    FC,
+    useEffect,
+    useRef,
+    useState,
+    ReactNode,
+    useMemo,
+} from 'react';
+import { Stage, Layer, Arrow } from 'react-konva';
+import styled from 'styled-components';
+import Konva from 'konva';
+import shortid from 'shortid';
 
-import ShapeWrap from './ShapeWrap'
-import { ArrowPosition, DesignerData, Shape } from '../types'
-import { getCircle } from '../utils/rough'
-import { getConnectPoint } from '../utils/connect'
-import Image from './Image'
+import ShapeWrap from './ShapeWrap';
+import { ArrowPosition, DesignerData, Shape } from '../types';
+import { getCircle } from '../utils/rough';
+import { getConnectPoint } from '../utils/connect';
+import Image from './Image';
 
 const Container = styled.div`
     display: flex;
     width: 100%;
     height: 100%;
     border: 1px solid #ebedf1;
+    outline: none;
 `;
 
-
-interface DesignerProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'onChange'> {
-    data: DesignerData
-    debug: boolean
-    onChange: (data: DesignerData) => void
+interface DesignerProps
+    extends Omit<React.HTMLAttributes<HTMLDivElement>, 'onChange'> {
+    data: DesignerData;
+    debug: boolean;
+    onChange: (data: DesignerData) => void;
 }
 
 const Designer: FC<DesignerProps> = ({
@@ -30,7 +38,6 @@ const Designer: FC<DesignerProps> = ({
     onChange,
     ...restProps
 }) => {
-
     const [size, setSize] = useState<{
         width: number;
         height: number;
@@ -40,8 +47,8 @@ const Designer: FC<DesignerProps> = ({
     });
 
     const ref = useRef<HTMLDivElement>(null);
-    const stageRef = useRef<Konva.Stage>(null)
-    const layerRef = useRef<Konva.Layer>(null)
+    const stageRef = useRef<Konva.Stage>(null);
+    const layerRef = useRef<Konva.Layer>(null);
 
     useEffect(() => {
         setSize({
@@ -50,40 +57,38 @@ const Designer: FC<DesignerProps> = ({
         });
     }, []);
 
-
-    const isInit = useRef<boolean>(false)
+    const isInit = useRef<boolean>(false);
     useEffect(() => {
         if (isInit.current) {
-            layerRef.current?.toggleHitCanvas()
+            layerRef.current?.toggleHitCanvas();
         }
-        isInit.current = true
-    }, [debug])
-
+        isInit.current = true;
+    }, [debug]);
 
     const shapesNodes = useMemo(() => {
-        const selectShape: Shape[] = []
-        const shapes: Shape[] = []
+        const selectShape: Shape[] = [];
+        const shapes: Shape[] = [];
 
-        data.shape.forEach(ele => {
+        data.shape.forEach((ele) => {
             if (ele.selectd) {
-                selectShape.push(ele)
+                selectShape.push(ele);
             } else {
-                shapes.push(ele)
+                shapes.push(ele);
             }
-        })
+        });
 
         if (selectShape.length > 0) {
-            selectShape.forEach(ele => {
-                shapes.push(ele)
-            })
+            selectShape.forEach((ele) => {
+                shapes.push(ele);
+            });
         }
 
-        const shapeElements: ReactNode[] = []
+        const shapeElements: ReactNode[] = [];
 
         shapes.forEach((ele) => {
-            const key = shortid.generate()
+            const key = shortid.generate();
             if (ele.type === 'Circle') {
-                shapeElements.push((
+                shapeElements.push(
                     <ShapeWrap
                         key={ele.id}
                         x={ele.x}
@@ -91,30 +96,32 @@ const Designer: FC<DesignerProps> = ({
                         type={ele.type}
                         selectd={ele.selectd || false}
                         onChange={(shapeChange) => {
-                            const changeDataIndex = data.shape.findIndex(shape => shape.id === ele.id)
+                            const changeDataIndex = data.shape.findIndex(
+                                (shape) => shape.id === ele.id,
+                            );
                             if (shapeChange.selectd) {
-                                data.shape.forEach(ele => {
-                                    ele.selectd = false
-                                })
+                                data.shape.forEach((ele) => {
+                                    ele.selectd = false;
+                                });
                             }
 
                             if (changeDataIndex !== -1) {
                                 data.shape[changeDataIndex] = {
                                     ...data.shape[changeDataIndex],
-                                    ...shapeChange
-                                }
+                                    ...shapeChange,
+                                };
                             }
-                            onChange({ ...data })
+                            onChange({ ...data });
                         }}
                         onClickConnect={(id, index) => {
                             data.arrows.push({
                                 id: shortid.generate(),
                                 source: {
                                     id,
-                                    junction: index
+                                    junction: index,
                                 },
-                                state: 'draw'
-                            })
+                                state: 'draw',
+                            });
                         }}
                     >
                         <Image
@@ -125,67 +132,88 @@ const Designer: FC<DesignerProps> = ({
                             url={getCircle(ele.width, ele.height)}
                             // stroke='black'
                         />
-                    </ShapeWrap>
-                ))
+                    </ShapeWrap>,
+                );
             }
-        })
-        return shapeElements
-    }, [data])
+        });
+        return shapeElements;
+    }, [data]);
 
     const arrowNodes = useMemo(() => {
-        const arrows: ReactNode[] = []
+        const arrows: ReactNode[] = [];
         if (!data.arrows) {
-            data.arrows = []
+            data.arrows = [];
         }
-        data.arrows.forEach(ele => {
-            const {
-                source,
-                target,
-                id
-            } = ele
+        data.arrows.forEach((ele) => {
+            const { source, target, id } = ele;
 
             const getPoints = (arrowPosition: ArrowPosition) => {
-                const findEle = stageRef.current?.findOne(`#${arrowPosition.id}`)!
-                const element = data.shape.find(ele => ele.id == arrowPosition.id)
-                const connectPoint = getConnectPoint(findEle, element!.type!)[arrowPosition.junction]
-                return [element!.x + connectPoint.x, element!.y + connectPoint.y]
-            }
+                const findEle = stageRef.current?.findOne(
+                    `#${arrowPosition.id}`,
+                )!;
+                const element = data.shape.find(
+                    (ele) => ele.id == arrowPosition.id,
+                );
+                const connectPoint = getConnectPoint(findEle, element!.type!)[
+                    arrowPosition.junction
+                ];
+                return [
+                    element!.x + connectPoint.x,
+                    element!.y + connectPoint.y,
+                ];
+            };
 
-            const getSourcePoint = () => getPoints(source)
+            const getSourcePoint = () => getPoints(source);
 
             const getTargetPoint = () => {
                 if (Array.isArray(target)) {
-                    return target
-                } else if (target){
-                    return getPoints(target)
+                    return target;
+                } else if (target) {
+                    return getPoints(target);
                 }
-                return []
-            }
+                return [];
+            };
 
             arrows.push(
                 <Arrow
+                    id={id}
                     points={[...getSourcePoint(), ...getTargetPoint()]}
                     fill="black"
                     stroke="black"
                     key={id}
                     strokeWidth={2}
-                />
-            )
+                    onMouseDown={(e) => {
+                        const targetId = e.target.id();
+                        data.arrows.forEach((ele) => {
+                            if (ele.id === targetId) {
+                                ele.state = 'draw';
+                                ele.selectd = true;
+                            } else {
+                                ele.selectd = false;
+                            }
+                        });
+                        data.shape.forEach((ele) => {
+                            ele.selectd = false;
+                        });
+                        onChange({ ...data });
+                    }}
+                />,
+            );
+        });
+        return arrows;
+    }, [data]);
 
-        })
-        return arrows
-    },[data])
-
-
-    const onClickIdleAreaEvent = (e: Konva.KonvaEventObject<TouchEvent | MouseEvent>) => {
+    const onClickIdleAreaEvent = (
+        e: Konva.KonvaEventObject<TouchEvent | MouseEvent>,
+    ) => {
         const clickedOnEmpty = e.target === e.target.getStage();
         if (clickedOnEmpty) {
-            data.shape.forEach(ele => {
-                ele.selectd = false
-            })
-            onChange({ ...data })
+            data.shape.forEach((ele) => {
+                ele.selectd = false;
+            });
+            onChange({ ...data });
         }
-    }
+    };
 
     /**
      * 进行页面的缩放
@@ -199,8 +227,7 @@ const Designer: FC<DesignerProps> = ({
             x: (pointer.x - stageRef.current!.x()) / oldScale,
             y: (pointer.y - stageRef.current!.y()) / oldScale,
         };
-        const newScale =
-            scaling > 0 ? oldScale * scaleBy : oldScale / scaleBy;
+        const newScale = scaling > 0 ? oldScale * scaleBy : oldScale / scaleBy;
 
         stageRef.current!.scale({ x: newScale, y: newScale });
         const newPos = {
@@ -208,12 +235,20 @@ const Designer: FC<DesignerProps> = ({
             y: pointer.y - mousePointTo.y * newScale,
         };
         stageRef.current!.position(newPos);
-    }
+    };
 
     return (
         <Container
+            tabIndex={-1}
             ref={ref}
             {...restProps}
+            onKeyDown={(e) => {
+                if (e.key === 'Delete') {
+                    data.arrows = data.arrows.filter((ele) => !ele.selectd);
+                    data.shape = data.shape.filter((ele) => !ele.selectd);
+                    onChange?.({ ...data });
+                }
+            }}
         >
             <Stage
                 ref={stageRef}
@@ -222,29 +257,27 @@ const Designer: FC<DesignerProps> = ({
                 onMouseDown={onClickIdleAreaEvent}
                 onTouchStart={onClickIdleAreaEvent}
                 onMouseUp={() => {
-                    data.arrows.forEach(ele => {
-                        ele.state = 'finish'
-                    })
-                    onChange({ ...data })
+                    data.arrows.forEach((ele) => {
+                        ele.state = 'finish';
+                    });
+                    onChange({ ...data });
                 }}
                 onMouseMove={(e) => {
-                    const {x, y} = e.target.getStage()!.getPointerPosition()!
-                    data.arrows.forEach(ele => {
+                    const { x, y } = e.target.getStage()!.getPointerPosition()!;
+                    data.arrows.forEach((ele) => {
                         if (ele.state === 'draw') {
-                            ele.target = [x, y]
+                            ele.target = [x, y];
                         }
-                    })
-                    onChange?.({...data})
+                    });
+                    onChange?.({ ...data });
                 }}
                 onWheel={(e) => {
                     // zoom(1.03, e.evt.deltaY)
                 }}
             >
-                <Layer
-                    ref={layerRef}
-                >
-                    {shapesNodes}
+                <Layer ref={layerRef}>
                     {arrowNodes}
+                    {shapesNodes}
                 </Layer>
             </Stage>
         </Container>

@@ -1,24 +1,19 @@
-import React, { cloneElement, useRef, useEffect, useState } from 'react'
-import { Transformer, Circle, Group} from 'react-konva'
-import Konva from 'konva'
-import shortid from 'shortid'
+import React, { cloneElement, useRef, useEffect, useState } from 'react';
+import { Transformer, Circle, Group } from 'react-konva';
+import Konva from 'konva';
+import shortid from 'shortid';
 
-
-import { Shape } from '../types'
-import { getConnectPoint } from '../utils/connect'
+import { Shape } from '../types';
+import { getConnectPoint } from '../utils/connect';
 
 interface ShapeParam {
-    x: number
-    y: number
-    type: string
-    selectd: boolean
-    onChange: (data: {
-        x?: number,
-        y?: number,
-        selectd?: boolean
-    }) => void
-    children: JSX.Element
-    onClickConnect?: (id: string, index: number) => void
+    x: number;
+    y: number;
+    type: string;
+    selectd: boolean;
+    onChange: (data: { x?: number; y?: number; selectd?: boolean }) => void;
+    children: JSX.Element;
+    onClickConnect?: (id: string, index: number) => void;
 }
 
 const ShapeWrap = ({
@@ -28,13 +23,13 @@ const ShapeWrap = ({
     type,
     selectd,
     onChange,
-    onClickConnect
+    onClickConnect,
 }: ShapeParam) => {
-    const shapeProps = children.props
+    const shapeProps = children.props;
 
     const shapeRef = useRef<Konva.Shape>(null);
     const transformerRef = useRef<Konva.Transformer>(null);
-    const id = useRef<string>(shapeProps.id || shortid.generate())
+    const id = useRef<string>(shapeProps.id || shortid.generate());
 
     const transformer = (
         <Transformer
@@ -50,29 +45,30 @@ const ShapeWrap = ({
                 onChange({
                     x,
                     y,
-                    selectd: true
-                })
+                    selectd: true,
+                });
             }}
         />
-    )
+    );
 
-    const [draggable, setDraggable] = useState<boolean>(true)
+    const [draggable, setDraggable] = useState<boolean>(true);
 
     useEffect(() => {
         if (selectd) {
-          transformerRef.current?.nodes([shapeRef.current!]);
-          transformerRef.current?.getLayer()?.batchDraw();
+            transformerRef.current?.nodes([shapeRef.current!]);
+            transformerRef.current?.getLayer()?.batchDraw();
         }
     }, [selectd]);
 
-    const [isHoverConnectPoint, setHoverConnectPoint] = useState<boolean>(false)
+    const [isHoverConnectPoint, setHoverConnectPoint] =
+        useState<boolean>(false);
 
-    const renderConnectPoint = (): {x: number, y: number}[] => {
+    const renderConnectPoint = (): { x: number; y: number }[] => {
         if (isHoverConnectPoint) {
-            return getConnectPoint(shapeRef.current!, type)
+            return getConnectPoint(shapeRef.current!, type);
         }
-        return []
-    }
+        return [];
+    };
 
     return (
         <Group
@@ -85,46 +81,43 @@ const ShapeWrap = ({
                 onChange({
                     x: e.target.x(),
                     y: e.target.y(),
-                })
-                setHoverConnectPoint(false)
+                });
+                setHoverConnectPoint(false);
             }}
-            onDragMove={(e) =>  {
+            onDragMove={(e) => {
                 onChange({
                     x: e.target.x(),
                     y: e.target.y(),
-                })
+                });
             }}
             onDragEnd={(e) => {
-                const size = shapeRef.current!.getSize()
-                const x = e.target.x()
-                const y = e.target.y()
                 onChange({
                     x: e.target.x(),
                     y: e.target.y(),
-                    selectd: true
-                })
+                    selectd: true,
+                });
             }}
-            onClick={(e) => {
+            onClick={() => {
                 onChange({
-                    selectd: true
-                })
+                    selectd: true,
+                });
             }}
             onMouseLeave={(e) => {
                 e.target.getStage()!.container().style.cursor = 'default';
-                setHoverConnectPoint(false)
+                setHoverConnectPoint(false);
             }}
-        > 
+            onMouseEnter={(e) => {
+                setDraggable(true);
+                e.target.getStage()!.container().style.cursor = 'move';
+                setHoverConnectPoint(true);
+            }}
+        >
             {cloneElement(children, {
                 ref: shapeRef,
                 id: id.current,
                 key: children.key,
                 name: id.current,
                 shadowBlur: shapeProps.shadowBlur || 1,
-                onMouseOver: (e: any) => {
-                    setDraggable(true)
-                    e.target.getStage()!.container().style.cursor = 'move';
-                    setHoverConnectPoint(true)
-                }
             })}
             {selectd ? transformer : null}
             {renderConnectPoint().map((connect, index) => (
@@ -132,23 +125,29 @@ const ShapeWrap = ({
                     x={connect.x}
                     y={connect.y}
                     name={id.current}
-                    key={shortid.generate()}
-                    stroke='black'
+                    key={index}
+                    stroke="black"
                     radius={5}
                     hitStrokeWidth={5}
-                    fill='#fff'
-                    onMouseOver={(e) => {
-                        e.target.getStage()!.container().style.cursor = 'crosshair';
-                        setDraggable(false)
-                    }}
+                    fill="#fff"
                     onMouseDown={(e) => {
-                        const id = e.target.name()
-                        onClickConnect?.(id, index)
+                        const id = e.target.name();
+                        onClickConnect?.(id, index);
+                    }}
+                    onMouseEnter={(e) => {
+                        e.target.getStage()!.container().style.cursor =
+                            'crosshair';
+                        setDraggable(false);
+                    }}
+                    onMouseLeave={(e) => {
+                        e.target.getStage()!.container().style.cursor =
+                            'default';
+                        setHoverConnectPoint(false);
                     }}
                 />
             ))}
         </Group>
-    )
-}
+    );
+};
 
-export default ShapeWrap
+export default ShapeWrap;
