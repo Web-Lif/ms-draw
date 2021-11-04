@@ -135,6 +135,7 @@ const Designer: FC<DesignerProps> = ({
                                         id,
                                         junction: index,
                                     };
+
                                 }
                             });
                         }}
@@ -153,18 +154,20 @@ const Designer: FC<DesignerProps> = ({
         return shapeElements;
     }, [data]);
 
+    const getPoints = (arrowPosition: ArrowPosition) => {
+        const findEle = stageRef.current?.findOne(`#${arrowPosition.id}`)!;
+        const element = data.shape.find(
+            (ele) => ele.id == arrowPosition.id,
+        );
+        const connectPoint = getConnectPoint(findEle, element!.type!)[
+            arrowPosition.junction
+        ];
+        return [element!.x + connectPoint.x, element!.y + connectPoint.y];
+    };
+
     // 计算折线的坐标
     const getArrowLinkPath = (arrow: ArrowType) => {
-        const getPoints = (arrowPosition: ArrowPosition) => {
-            const findEle = stageRef.current?.findOne(`#${arrowPosition.id}`)!;
-            const element = data.shape.find(
-                (ele) => ele.id == arrowPosition.id,
-            );
-            const connectPoint = getConnectPoint(findEle, element!.type!)[
-                arrowPosition.junction
-            ];
-            return [element!.x + connectPoint.x, element!.y + connectPoint.y];
-        };
+
 
         const getSourcePoint = () => getPoints(arrow.source);
 
@@ -413,9 +416,20 @@ const Designer: FC<DesignerProps> = ({
                 onMouseDown={onClickIdleAreaEvent}
                 onTouchStart={onClickIdleAreaEvent}
                 onMouseUp={() => {
+                    const arrowsTemp: ArrowType[] = []
                     data.arrows.forEach((ele) => {
-                        ele.state = 'finish';
-                    });
+                        if (ele.state === 'finish') {
+                            arrowsTemp.push(ele)
+                        } else if (ele.state === 'draw' && ele.target) {
+                            const target = ele.target
+                            if (((!Array.isArray(target) && ele.source.id !== target.id)) || Array.isArray(target)) {
+                                ele.state = 'finish'
+                                arrowsTemp.push(ele)
+                            }
+                        }
+                    })
+
+                    data.arrows = arrowsTemp
                     onChange({ ...data });
                 }}
                 onMouseMove={(e) => {
