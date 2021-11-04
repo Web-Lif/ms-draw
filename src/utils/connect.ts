@@ -1,9 +1,8 @@
 
 import Konva from 'konva'
-import { Direction } from '../types'
 
-export const getConnectPoint = (shapeRef: Konva.Node, type: string): {x: number, y: number}[] => {
-    if (type === 'Circle' && shapeRef ) {
+export const getConnectPoint = (shapeRef: Konva.Node): {x: number, y: number}[] => {
+    if ( shapeRef ) {
         const {x, y } = shapeRef.getPosition()
         const { width, height } = shapeRef.getSize()
         const { x: scaleX, y: scaleY} = shapeRef.scale()
@@ -15,7 +14,7 @@ export const getConnectPoint = (shapeRef: Konva.Node, type: string): {x: number,
             // 右
             { x: x + rWidth,  y: y + rHeight / 2 },
             // 下
-            { x: x + rHeight / 2, y: y + rHeight},
+            { x: x + rWidth / 2, y: y + rHeight},
             // 左
             { x, y : y + rHeight / 2 },
         ]

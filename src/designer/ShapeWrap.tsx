@@ -3,13 +3,11 @@ import { Transformer, Circle, Group } from 'react-konva';
 import Konva from 'konva';
 import shortid from 'shortid';
 
-import { Shape } from '../types';
 import { getConnectPoint } from '../utils/connect';
 
 interface ShapeParam {
     x: number;
     y: number;
-    type: string;
     selectd: boolean;
     onChange: (data: { x?: number; y?: number; selectd?: boolean }) => void;
     children: JSX.Element;
@@ -21,7 +19,6 @@ const ShapeWrap = ({
     x,
     y,
     children,
-    type,
     selectd,
     onChange,
     onClickConnectDown,
@@ -67,7 +64,7 @@ const ShapeWrap = ({
 
     const renderConnectPoint = (): { x: number; y: number }[] => {
         if (isHoverConnectPoint) {
-            return getConnectPoint(shapeRef.current!, type);
+            return getConnectPoint(shapeRef.current!);
         }
         return [];
     };
@@ -103,6 +100,7 @@ const ShapeWrap = ({
                 onChange({
                     selectd: true,
                 });
+                setHoverConnectPoint(false);
             }}
             onMouseLeave={(e) => {
                 e.target.getStage()!.container().style.cursor = 'default';
@@ -111,7 +109,9 @@ const ShapeWrap = ({
             onMouseEnter={(e) => {
                 setDraggable(true);
                 e.target.getStage()!.container().style.cursor = 'move';
-                setHoverConnectPoint(true);
+                if (selectd === false) {
+                    setHoverConnectPoint(true);
+                }
             }}
         >
             {cloneElement(children, {

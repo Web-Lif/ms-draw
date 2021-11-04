@@ -21,7 +21,7 @@ export interface Shape {
     width: number;
     fillStyle?: string;
     fill?: string;
-    type?: 'Circle';
+    type?: 'Circle' | 'Rect' | 'Rhombus';
     selectd?: boolean;
 }
 

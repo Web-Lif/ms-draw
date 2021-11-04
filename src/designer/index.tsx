@@ -18,7 +18,7 @@ import {
     Shape,
     Arrow as ArrowType,
 } from '../types';
-import { getCircle } from '../utils/rough';
+import { getCircle, getRect, getRhombus } from '../utils/rough';
 import { getConnectPoint } from '../utils/connect';
 import Image from './Image';
 
@@ -92,67 +92,73 @@ const Designer: FC<DesignerProps> = ({
 
         shapes.forEach((ele) => {
             const key = shortid.generate();
-            if (ele.type === 'Circle') {
-                shapeElements.push(
-                    <ShapeWrap
-                        key={ele.id}
-                        x={ele.x}
-                        y={ele.y}
-                        type={ele.type}
-                        selectd={ele.selectd || false}
-                        onChange={(shapeChange) => {
-                            const changeDataIndex = data.shape.findIndex(
-                                (shape) => shape.id === ele.id,
-                            );
-                            if (shapeChange.selectd) {
-                                data.shape.forEach((ele) => {
-                                    ele.selectd = false;
-                                });
-                            }
+            const options = {
+                fill: ele.fill,
+                fillStyle: ele.fillStyle
+            }
 
-                            if (changeDataIndex !== -1) {
-                                data.shape[changeDataIndex] = {
-                                    ...data.shape[changeDataIndex],
-                                    ...shapeChange,
-                                };
-                            }
-                            onChange({ ...data });
-                        }}
-                        onClickConnectDown={(id, index) => {
-                            data.arrows.push({
-                                id: shortid.generate(),
-                                source: {
+            let url = getCircle(ele.width, ele.height, options)
+            if (ele.type === 'Rect') {
+                url = getRect(ele.width, ele.height, options)
+            } else if (ele.type === 'Rhombus') {
+                url = getRhombus(ele.width, ele.height, options)
+            }
+            shapeElements.push(
+                <ShapeWrap
+                    key={ele.id}
+                    x={ele.x}
+                    y={ele.y}
+                    selectd={ele.selectd || false}
+                    onChange={(shapeChange) => {
+                        const changeDataIndex = data.shape.findIndex(
+                            (shape) => shape.id === ele.id,
+                        );
+                        if (shapeChange.selectd) {
+                            data.shape.forEach((ele) => {
+                                ele.selectd = false;
+                            });
+                        }
+
+                        if (changeDataIndex !== -1) {
+                            data.shape[changeDataIndex] = {
+                                ...data.shape[changeDataIndex],
+                                ...shapeChange,
+                            };
+                        }
+                        onChange({ ...data });
+                    }}
+                    onClickConnectDown={(id, index) => {
+                        data.arrows.push({
+                            id: shortid.generate(),
+                            source: {
+                                id,
+                                junction: index,
+                            },
+                            state: 'draw',
+                        });
+                    }}
+                    onClickConnectUp={(id, index) => {
+                        data.arrows.forEach((ele) => {
+                            if (ele.state === 'draw') {
+                                ele.target = {
                                     id,
                                     junction: index,
-                                },
-                                state: 'draw',
-                            });
-                        }}
-                        onClickConnectUp={(id, index) => {
-                            data.arrows.forEach((ele) => {
-                                if (ele.state === 'draw') {
-                                    ele.target = {
-                                        id,
-                                        junction: index,
-                                    };
+                                };
 
-                                }
-                            });
-                        }}
-                    >
-                        <Image
-                            id={ele.id || key}
-                            key={ele.id || key}
-                            width={ele.width}
-                            height={ele.height}
-                            url={getCircle(ele.width, ele.height, {
-                                fill: ele.fill,
-                                fillStyle: ele.fillStyle
-                            })}
-                        />
-                    </ShapeWrap>,
-                );
-            }
+                            }
+                        });
+                    }}
+                >
+                    <Image
+                        id={ele.id || key}
+                        key={ele.id || key}
+                        width={ele.width}
+                        height={ele.height}
+                        url={url}
+                    />
+                </ShapeWrap>,
+            );
+
         });
         return shapeElements;
     }, [data]);
@@ -162,7 +168,7 @@ const Designer: FC<DesignerProps> = ({
         const element = data.shape.find(
             (ele) => ele.id == arrowPosition.id,
         );
-        const connectPoint = getConnectPoint(findEle, element!.type!)[
+        const connectPoint = getConnectPoint(findEle)[
             arrowPosition.junction
         ];
         return [element!.x + connectPoint.x, element!.y + connectPoint.y];
@@ -376,7 +382,7 @@ const Designer: FC<DesignerProps> = ({
                             }
                         }
                     } else if (arrow.target!.junction === 3) {
-                        if (direction === 0 || direction === 3 ) {
+                        if (direction === 0 || direction === 3) {
                             points.push(
                                 sx + offset, sy,
                                 sx + offset, ty
@@ -441,12 +447,12 @@ const Designer: FC<DesignerProps> = ({
                                 sx, ty + offset,
                                 tx, ty + offset,
                             )
-                        } else if (direction === 2  || direction === 3) {
+                        } else if (direction === 2 || direction === 3) {
                             points.push(
                                 sx, sy + offset,
                                 tx, sy + offset,
                             )
-                        } 
+                        }
                     } else if (arrow.target?.junction === 3) {
                         if (direction === 3) {
                             points.push(
@@ -464,7 +470,7 @@ const Designer: FC<DesignerProps> = ({
                                 tx - offset, sy + offset,
                                 tx - offset, ty,
                             )
-                        } 
+                        }
                     }
                 } else if (arrow.source.junction === 3) {
                     if (arrow.target?.junction === 0) {
@@ -483,7 +489,7 @@ const Designer: FC<DesignerProps> = ({
                             )
                         } else if (direction === 1 || direction === 2) {
                             points.push(
-                                tx + offset, sy ,
+                                tx + offset, sy,
                                 tx + offset, ty
                             )
                         }
