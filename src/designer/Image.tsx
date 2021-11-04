@@ -19,7 +19,7 @@ const Image: FC<ImageProps> = forwardRef<Konva.Image, ImageProps>(({
         img.onload = () => {
             setImage(img)
         }
-    }, [])
+    }, [url])
     
     return (
         <KonvaImage

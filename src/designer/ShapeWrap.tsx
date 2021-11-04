@@ -9,7 +9,7 @@ interface ShapeParam {
     x: number;
     y: number;
     selectd: boolean;
-    onChange: (data: { x?: number; y?: number; selectd?: boolean }) => void;
+    onChange: (data: { x?: number; y?: number; width?: number, height?: number, selectd?: boolean }) => void;
     children: JSX.Element;
     onClickConnectDown?: (id: string, index: number) => void;
     onClickConnectUp?: (id: string, index: number) => void;
@@ -40,10 +40,32 @@ const ShapeWrap = ({
                 }
                 return newBox;
             }}
-            onTransform={(e) => {
+            
+            onTransformEnd={(e) => {
+                const node = e.target;
+                const scaleX = node.scaleX();
+                const scaleY = node.scaleY();
+                node.scaleX(1);
+                node.scaleY(1);
                 onChange({
                     x,
                     y,
+                    width: Math.max(5, node.width() * scaleX),
+                    height: Math.max(node.height() * scaleY),
+                    selectd: true,
+                });
+            }}
+            onTransform={(e) => {
+                const node = e.target;
+                const scaleX = node.scaleX();
+                const scaleY = node.scaleY();
+                node.scaleX(1);
+                node.scaleY(1);
+                onChange({
+                    x,
+                    y,
+                    width: Math.max(5, node.width() * scaleX),
+                    height: Math.max(node.height() * scaleY),
                     selectd: true,
                 });
             }}

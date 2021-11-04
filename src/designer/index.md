@@ -29,7 +29,7 @@ export default () => {
                 id: '2',
                 x: 0,
                 y: 0,
-                width: 100,
+                width: 500,
                 height: 100,
             },
             {
