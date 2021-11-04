@@ -145,7 +145,10 @@ const Designer: FC<DesignerProps> = ({
                             key={ele.id || key}
                             width={ele.width}
                             height={ele.height}
-                            url={getCircle(ele.width, ele.height)}
+                            url={getCircle(ele.width, ele.height, {
+                                fill: ele.fill,
+                                fillStyle: ele.fillStyle
+                            })}
                         />
                     </ShapeWrap>,
                 );
@@ -316,6 +319,209 @@ const Designer: FC<DesignerProps> = ({
                                 tx - offset,
                                 ty,
                             );
+                        }
+                    }
+                } else if (arrow.source.junction === 1) {
+                    if (arrow.target!.junction === 0) {
+                        if (direction === 3 || direction === 2) {
+                            points.push(
+                                sx + offset, sy,
+                                sx + offset, ty - offset,
+                                tx, ty - offset
+                            )
+                        } else if (direction === 0) {
+                            points.push(
+                                tx, sy,
+                                tx, ty - offset
+                            )
+                        } else if (direction === 1) {
+                            points.push(
+                                sx + offset, sy,
+                                sx + offset, ty - offset,
+                                tx, ty - offset
+                            )
+                        }
+
+                    } else if (arrow.target!.junction === 1) {
+                        if (direction === 3 || direction === 0) {
+                            points.push(
+                                tx + offset, sy,
+                                tx + offset, ty,
+                            )
+                        } else if (direction === 1 || direction === 2) {
+                            points.push(
+                                sx + offset, sy,
+                                sx + offset, ty
+                            )
+                        }
+
+                    } else if (arrow.target!.junction === 2) {
+                        if (direction === 3) {
+                            points.push(
+                                tx, sy
+                            )
+                        } else if (direction === 2) {
+                            if (sy - ty <= height) {
+                                points.push(
+                                    sx + offset, sy,
+                                    sx + offset, sy + height / 2 + offset,
+                                    tx, sy + height / 2 + offset
+                                )
+                            } else {
+                                points.push(
+                                    sx + offset, sy,
+                                    sx + offset, sy - height / 2 - offset,
+                                    tx, sy - height / 2 - offset
+                                )
+                            }
+                        }
+                    } else if (arrow.target!.junction === 3) {
+                        if (direction === 0 || direction === 3 ) {
+                            points.push(
+                                sx + offset, sy,
+                                sx + offset, ty
+                            )
+                        } else if (direction === 2) {
+                            if (sy - ty <= height) {
+                                points.push(
+                                    sx + offset, sy,
+                                    sx + offset, sy + height / 2 + offset,
+                                    tx, sy + height / 2 + offset,
+                                    tx - offset, sy + height / 2 + offset,
+                                    tx - offset, ty
+                                )
+                            } else {
+                                points.push(
+                                    sx + offset, sy,
+                                    sx + offset, sy - height / 2 - offset,
+                                    tx - offset, sy - height / 2 - offset,
+                                    tx - offset, ty
+                                )
+                            }
+                        } else if (direction === 1) {
+                            points.push(
+                                sx + offset, sy,
+                                sx + offset, sy - height / 2 - offset,
+                                tx - offset, sy - height / 2 - offset,
+                                tx - offset, ty
+                            )
+                        }
+                    }
+                } else if (arrow.source.junction === 2) {
+                    if (arrow.target?.junction === 0) {
+                        if (direction === 0 || direction === 1) {
+                            points.push(
+                                sx, ty - offset,
+                                tx, ty - offset
+                            )
+                        } else if (direction === 2) {
+                            points.push(
+                                sx, sy + offset,
+                                sx - height / 2 - offset, sy + offset,
+                                sx - height / 2 - offset, ty - offset,
+                                tx, ty - offset
+                            )
+                        } else if (direction === 3) {
+                            points.push(
+                                sx, sy + offset,
+                                sx + height / 2 + offset, sy + offset,
+                                sx + height / 2 + offset, ty - offset,
+                                tx, ty - offset
+                            )
+                        }
+                    } else if (arrow.target?.junction === 1) {
+                        points.push(
+                            sx, sy + offset,
+                            tx + offset, sy + offset,
+                            tx + offset, ty,
+                        )
+                    } else if (arrow.target?.junction === 2) {
+                        if (direction === 0 || direction === 1) {
+                            points.push(
+                                sx, ty + offset,
+                                tx, ty + offset,
+                            )
+                        } else if (direction === 2  || direction === 3) {
+                            points.push(
+                                sx, sy + offset,
+                                tx, sy + offset,
+                            )
+                        } 
+                    } else if (arrow.target?.junction === 3) {
+                        if (direction === 3) {
+                            points.push(
+                                sx, sy + offset,
+                                sx + width / 2 + offset, sy + offset,
+                                sx + width / 2 + offset, ty
+                            )
+                        } else if (direction === 0) {
+                            points.push(
+                                sx, ty,
+                            )
+                        } else if (direction === 1 || direction === 2) {
+                            points.push(
+                                sx, sy + offset,
+                                tx - offset, sy + offset,
+                                tx - offset, ty,
+                            )
+                        } 
+                    }
+                } else if (arrow.source.junction === 3) {
+                    if (arrow.target?.junction === 0) {
+                        points.push(
+                            sx - offset, sy,
+                            sx - offset, ty - offset,
+                            tx, ty - offset,
+                        )
+                    } else if (arrow.target?.junction === 1) {
+                        if (direction === 3 || direction === 0) {
+                            points.push(
+                                sx - offset, sy,
+                                sx - offset, ty - offset - height / 2,
+                                tx + offset, ty - offset - height / 2,
+                                tx + offset, ty,
+                            )
+                        } else if (direction === 1 || direction === 2) {
+                            points.push(
+                                tx + offset, sy ,
+                                tx + offset, ty
+                            )
+                        }
+                    } else if (arrow.target?.junction === 2) {
+                        if (direction === 3) {
+                            points.push(
+                                sx - offset, sy,
+                                sx - offset, sy - height / 2 - offset,
+                                tx, sy - height / 2 - offset
+                            )
+                        } else if (direction === 2) {
+                            points.push(
+                                tx, sy
+                            )
+                        } else if (direction === 0) {
+                            points.push(
+                                sx - offset, sy,
+                                sx - offset, ty + offset,
+                                tx, ty + offset,
+                            )
+                        } else if (direction === 1) {
+                            points.push(
+                                sx - offset, sy,
+                                sx - offset, ty + offset,
+                                tx, ty + offset,
+                            )
+                        }
+                    } else if (arrow.target?.junction === 3) {
+                        if (direction === 0 || direction === 3) {
+                            points.push(
+                                sx - offset, sy,
+                                sx - offset, ty,
+                            )
+                        } else if (direction === 1 || direction === 2) {
+                            points.push(
+                                tx - offset, sy,
+                                tx - offset, ty,
+                            )
                         }
                     }
                 }

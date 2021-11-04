@@ -19,6 +19,8 @@ export interface Shape {
     y: number;
     height: number;
     width: number;
+    fillStyle?: string;
+    fill?: string;
     type?: 'Circle';
     selectd?: boolean;
 }
