@@ -7,7 +7,6 @@ import styled from 'styled-components'
 import html2canvas from 'html2canvas'
 
 import { getConnectPoint } from '../utils/connect';
-import { toBase64Url } from '../utils/rough'
 import { Shape } from '../types'
 import Image from './Image'
 
@@ -50,6 +49,19 @@ interface EditorParam {
 }
 
 
+function setEndOfContenteditable(contentEditableElement: Element)
+{
+    let range,selection;
+    if(document.createRange) {
+        range = document.createRange()
+        range.selectNodeContents(contentEditableElement)
+        range.collapse(false)
+        selection = window.getSelection()
+        selection?.removeAllRanges()
+        selection?.addRange(range)
+    }
+}
+
 const useEditor = ({
     x,
     y,
@@ -69,6 +81,7 @@ const useEditor = ({
     useEffect(() => {
         if (visible) {
             editContentRef.current?.focus()
+            setEndOfContenteditable(editContentRef.current!)
         }
     }, [visible])
 
