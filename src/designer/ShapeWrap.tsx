@@ -1,29 +1,148 @@
-import React, { cloneElement, useRef, useEffect, useState } from 'react';
+import React, { cloneElement, useRef, useEffect, useState, useLayoutEffect, ReactNode } from 'react';
 import { Transformer, Circle, Group } from 'react-konva';
 import Konva from 'konva';
 import shortid from 'shortid';
+import { Html } from 'react-konva-utils';
+import styled from 'styled-components'
+import html2canvas from 'html2canvas'
 
 import { getConnectPoint } from '../utils/connect';
+import { toBase64Url } from '../utils/rough'
+import { Shape } from '../types'
+import Image from './Image'
+
+const Editor = styled.div`
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    outline: none;
+    > div {
+        padding: 0px 10%;
+        box-sizing: border-box;
+    }
+`
 
 interface ShapeParam {
-    x: number;
-    y: number;
-    selectd: boolean;
-    onChange: (data: { x?: number; y?: number; width?: number, height?: number, selectd?: boolean }) => void;
+    shape: Shape
+    onChange: (data: {
+        x?: number,
+        y?: number,
+        width?: number
+        height?: number,
+        text?: string,
+        selectd?: boolean
+    }) => void;
     children: JSX.Element;
     onClickConnectDown?: (id: string, index: number) => void;
     onClickConnectUp?: (id: string, index: number) => void;
 }
 
-const ShapeWrap = ({
+interface EditorParam {
+    x: number
+    y: number
+    width: number
+    height: number
+    text: string,
+    visible: boolean,
+    onChange?: (text: string) => void
+    onBlur?: () => void
+    onDblClick?: (e: Konva.KonvaEventObject<MouseEvent>) => void
+}
+
+
+const useEditor = ({
     x,
     y,
+    width,
+    height,
+    text,
+    visible,
+    onChange,
+    onBlur,
+    onDblClick
+}: EditorParam) => {
+
+    const editRef = useRef<HTMLDivElement>(null)
+    const editContentRef = useRef<HTMLDivElement>(null)
+
+    const [url, setUrl] = useState<string>('')
+    useLayoutEffect(() => {
+        if (visible) {
+            editContentRef.current?.focus()
+        }
+    }, [visible])
+
+
+    return (
+        <>
+            <Html
+                divProps={{
+                    style: {
+                        position: 'absolute',
+                        display: 'flex',
+                        left: x,
+                        top: y,
+                    },
+                }}
+            >
+                <Editor
+                    ref={editRef}
+                    style={{
+                        width,
+                        height,
+                        display: visible ? 'flex' : 'none'
+                    }}
+                    onBlur={() => {
+                        onBlur?.()
+                        console.log(editRef.current)
+                        if (editRef.current) {
+                            html2canvas(editRef.current, {
+                                backgroundColor: null
+                            }).then((svg) => {
+                                setUrl(svg.toDataURL())
+                            })
+                        }
+                    }}
+                    onChange={(e) => {
+                        onChange?.(e.currentTarget.textContent!)
+                    }}
+                >
+                    <div
+                        ref={editContentRef}
+                        suppressContentEditableWarning
+                        tabIndex={-1}
+                        contentEditable
+                        style={{
+                            maxWidth: width,
+                        }}
+                    >
+                        {text}
+                    </div>
+                </Editor>
+            </Html>
+            {!visible ? (
+                <Image
+                    width={width}
+                    height={height}
+                    url={url}
+                    onDblClick={(e: any) => {
+                        onDblClick?.(e)
+                    }}
+                />
+            ): null}
+            
+        </>
+    )
+}
+
+const ShapeWrap = ({
+    shape,
     children,
-    selectd,
     onChange,
     onClickConnectDown,
     onClickConnectUp,
 }: ShapeParam) => {
+    const { x, y, text = '', selectd = false } = shape
     const shapeProps = children.props;
 
     const shapeRef = useRef<Konva.Shape>(null);
@@ -40,7 +159,7 @@ const ShapeWrap = ({
                 }
                 return newBox;
             }}
-            
+
             onTransformEnd={(e) => {
                 const node = e.target;
                 const scaleX = node.scaleX();
@@ -73,6 +192,7 @@ const ShapeWrap = ({
     );
 
     const [draggable, setDraggable] = useState<boolean>(true);
+    const [isEditor, setIsEditor] = useState<boolean>(false)
 
     useEffect(() => {
         if (selectd) {
@@ -91,6 +211,25 @@ const ShapeWrap = ({
         return [];
     };
 
+    const editor = useEditor({
+        x,
+        y,
+        text,
+        visible: isEditor,
+        height: shapeProps.height,
+        width: shapeProps.width,
+        onBlur: () => {
+            setIsEditor(false)
+        },
+        onChange: (changeText) => {
+            onChange?.({
+                text: changeText
+            })
+        },
+        onDblClick: () => {
+            setIsEditor(true)
+        }
+    })
     return (
         <Group
             x={x}
@@ -141,8 +280,9 @@ const ShapeWrap = ({
                 id: id.current,
                 key: children.key,
                 name: id.current,
-                shadowBlur: shapeProps.shadowBlur || 1,
+                shadowBlur: shapeProps.shadowBlur || 1
             })}
+            {editor}
             {selectd ? transformer : null}
             {renderConnectPoint().map((connect, index) => (
                 <Circle
@@ -158,6 +298,7 @@ const ShapeWrap = ({
                         const id = e.target.name();
                         onClickConnectDown?.(id, index);
                     }}
+
                     onMouseUp={(e) => {
                         const id = e.target.name();
                         onClickConnectUp?.(id, index);
@@ -174,6 +315,7 @@ const ShapeWrap = ({
                     }}
                 />
             ))}
+            
         </Group>
     );
 };

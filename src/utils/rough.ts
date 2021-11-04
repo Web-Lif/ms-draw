@@ -17,7 +17,7 @@ function withCustomMathRandom<T>(seed: number, cb: () => T): T {
   }
   
 
-function toBase64Url(svg: SVGSVGElement) {
+export function toBase64Url(svg: SVGSVGElement) {
     const url = new XMLSerializer().serializeToString(svg);
     return `data:image/svg+xml;base64,${Buffer.from(url).toString('base64')}`;
 }

@@ -106,9 +106,7 @@ const Designer: FC<DesignerProps> = ({
             shapeElements.push(
                 <ShapeWrap
                     key={ele.id}
-                    x={ele.x}
-                    y={ele.y}
-                    selectd={ele.selectd || false}
+                    shape={ele}
                     onChange={(shapeChange) => {
                         const changeDataIndex = data.shape.findIndex(
                             (shape) => shape.id === ele.id,
