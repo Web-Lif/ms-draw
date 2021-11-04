@@ -86,6 +86,7 @@ const useEditor = ({
     }, [visible])
 
     const isInit = useRef<boolean>(true)
+
     useLayoutEffect(() => {
         setTimeout(() => {
             if (editRef.current) {
@@ -98,7 +99,6 @@ const useEditor = ({
             isInit.current = false   
         }, 0);
     }, [])
-
 
     return (
         <>
@@ -128,10 +128,9 @@ const useEditor = ({
                                 setUrl(svg.toDataURL())
                             })
                         }
+                        onChange?.(editContentRef.current!.textContent!)
                     }}
-                    onChange={(e) => {
-                        onChange?.(e.currentTarget.textContent!)
-                    }}
+        
                 >
                     <div
                         ref={editContentRef}

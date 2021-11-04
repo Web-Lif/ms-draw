@@ -52,6 +52,14 @@ export default () => {
             >
                 {debug ? '关闭调试' : '开启调试'}
             </button>
+
+            <button
+                onClick={() => {
+                    console.log(data)
+                }}
+            >
+                查看数据
+            </button>
             <Designer
                 debug={debug}
                 style={{
