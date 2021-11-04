@@ -31,6 +31,7 @@ export default () => {
                 y: 0,
                 width: 500,
                 height: 100,
+                text: '你好呀，hahaha'
             },
             {
                 type: 'Rhombus',

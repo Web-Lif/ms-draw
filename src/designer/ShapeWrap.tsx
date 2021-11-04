@@ -66,11 +66,25 @@ const useEditor = ({
     const editContentRef = useRef<HTMLDivElement>(null)
 
     const [url, setUrl] = useState<string>('')
-    useLayoutEffect(() => {
+    useEffect(() => {
         if (visible) {
             editContentRef.current?.focus()
         }
     }, [visible])
+
+    const isInit = useRef<boolean>(true)
+    useLayoutEffect(() => {
+        setTimeout(() => {
+            if (editRef.current) {
+                html2canvas(editRef.current, {
+                    backgroundColor: null
+                }).then((svg) => {
+                    setUrl(svg.toDataURL())
+                })
+            }
+            isInit.current = false   
+        }, 0);
+    }, [])
 
 
     return (
@@ -90,11 +104,10 @@ const useEditor = ({
                     style={{
                         width,
                         height,
-                        display: visible ? 'flex' : 'none'
+                        display: visible || isInit.current ? 'flex' : 'none'
                     }}
                     onBlur={() => {
                         onBlur?.()
-                        console.log(editRef.current)
                         if (editRef.current) {
                             html2canvas(editRef.current, {
                                 backgroundColor: null
