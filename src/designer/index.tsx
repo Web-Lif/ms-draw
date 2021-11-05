@@ -6,12 +6,12 @@ import React, {
     ReactNode,
     useMemo,
 } from 'react';
-import { Stage, Layer, Arrow } from 'react-konva';
+import { Stage, Layer, Arrow, Rect} from 'react-konva';
 import styled from 'styled-components';
 import Konva from 'konva';
 import shortid from 'shortid';
 
-import ShapeWrap from './ShapeWrap';
+import ShapeWrap from '../shapes/ShapeWrap';
 import {
     ArrowPosition,
     DesignerData,
@@ -20,6 +20,7 @@ import {
 } from '../types';
 import { getCircle, getRect, getRhombus } from '../utils/rough';
 import { getConnectPoint } from '../utils/connect';
+import Swimlane from '../shapes/Swimlane'
 import Image from './Image';
 
 const Container = styled.div`
@@ -28,6 +29,7 @@ const Container = styled.div`
     height: 100%;
     border: 1px solid #ebedf1;
     outline: none;
+    overflow: hidden;
 `;
 
 interface DesignerProps
@@ -73,10 +75,13 @@ const Designer: FC<DesignerProps> = ({
     const shapesNodes = useMemo(() => {
         const selectShape: Shape[] = [];
         const shapes: Shape[] = [];
-
+        const bottoms: Shape[] = [];
+        debugger
         data.shape.forEach((ele) => {
-            if (ele.selectd) {
+            if (ele.selectd ) {
                 selectShape.push(ele);
+            } else if (ele.type === 'Swimlane') {
+                bottoms.push(ele)
             } else {
                 shapes.push(ele);
             }
@@ -88,6 +93,10 @@ const Designer: FC<DesignerProps> = ({
             });
         }
 
+        shapes.splice(0, 0, ...bottoms)
+
+        console.log(shapes)
+
         const shapeElements: ReactNode[] = [];
 
         shapes.forEach((ele) => {
@@ -97,65 +106,112 @@ const Designer: FC<DesignerProps> = ({
                 fillStyle: ele.fillStyle
             }
 
-            let url = getCircle(ele.width, ele.height, options)
-            if (ele.type === 'Rect') {
-                url = getRect(ele.width, ele.height, options)
-            } else if (ele.type === 'Rhombus') {
-                url = getRhombus(ele.width, ele.height, options)
-            }
-            shapeElements.push(
-                <ShapeWrap
-                    key={ele.id}
-                    shape={ele}
-                    onChange={(shapeChange) => {
-                        const changeDataIndex = data.shape.findIndex(
-                            (shape) => shape.id === ele.id,
-                        );
-                        if (shapeChange.selectd) {
-                            data.shape.forEach((ele) => {
-                                ele.selectd = false;
-                            });
-                        }
-
-                        if (changeDataIndex !== -1) {
-                            data.shape[changeDataIndex] = {
-                                ...data.shape[changeDataIndex],
-                                ...shapeChange,
-                            };
-                        }
-                        onChange({ ...data });
-                    }}
-                    onClickConnectDown={(id, index) => {
-                        data.arrows.push({
-                            id: shortid.generate(),
-                            source: {
-                                id,
-                                junction: index,
-                            },
-                            state: 'draw',
-                        });
-                    }}
-                    onClickConnectUp={(id, index) => {
-                        data.arrows.forEach((ele) => {
-                            if (ele.state === 'draw') {
-                                ele.target = {
+            if (ele.type === 'Swimlane') {
+                shapeElements.push(
+                    <>
+                        
+                        <ShapeWrap
+                            key={ele.id}
+                            shape={ele}
+                            displayConnect={false}
+                            external={(
+                                <Swimlane
+                                    shape={ele}
+                                />
+                            )}
+                            onChange={(shapeChange) => {
+                                const changeDataIndex = data.shape.findIndex(
+                                    (shape) => shape.id === ele.id,
+                                );
+                                if (shapeChange.selectd) {
+                                    data.shape.forEach((ele) => {
+                                        ele.selectd = false;
+                                    });
+                                }
+        
+                                if (changeDataIndex !== -1) {
+                                    data.shape[changeDataIndex] = {
+                                        ...data.shape[changeDataIndex],
+                                        ...shapeChange,
+                                    };
+                                }
+                                onChange({ ...data });
+                            }}
+                        >
+                            <Rect
+                                id={ele.id || key}
+                                key={ele.id || key}
+                                width={ele.width}
+                                height={ele.height}
+                            />    
+                        </ShapeWrap>
+                    </>
+                );
+            } else {
+                let url = getCircle(ele.width, ele.height, options)
+                if (ele.type === 'Rect') {
+                    url = getRect(ele.width, ele.height, options)
+                    
+                } else if (ele.type === 'Rhombus') {
+                    url = getRhombus(ele.width, ele.height, options)
+                }
+    
+                shapeElements.push(
+                    <ShapeWrap
+                        key={ele.id}
+                        shape={ele}
+                        onChange={(shapeChange) => {
+                            const changeDataIndex = data.shape.findIndex(
+                                (shape) => shape.id === ele.id,
+                            );
+                            if (shapeChange.selectd) {
+                                data.shape.forEach((ele) => {
+                                    ele.selectd = false;
+                                });
+                            }
+    
+                            if (changeDataIndex !== -1) {
+                                data.shape[changeDataIndex] = {
+                                    ...data.shape[changeDataIndex],
+                                    ...shapeChange,
+                                };
+                            }
+                            onChange({ ...data });
+                        }}
+                        onClickConnectDown={(id, index) => {
+                            data.arrows.push({
+                                id: shortid.generate(),
+                                source: {
                                     id,
                                     junction: index,
-                                };
+                                },
+                                state: 'draw',
+                            });
+                        }}
+                        onClickConnectUp={(id, index) => {
+                            data.arrows.forEach((ele) => {
+                                if (ele.state === 'draw') {
+                                    ele.target = {
+                                        id,
+                                        junction: index,
+                                    };
+    
+                                }
+                            });
+                        }}
+                    >
+                        <Image
+                            id={ele.id || key}
+                            key={ele.id || key}
+                            width={ele.width}
+                            height={ele.height}
+                            url={url}
+                        />
+                    </ShapeWrap>,
+                );
+                
+            }
 
-                            }
-                        });
-                    }}
-                >
-                    <Image
-                        id={ele.id || key}
-                        key={ele.id || key}
-                        width={ele.width}
-                        height={ele.height}
-                        url={url}
-                    />
-                </ShapeWrap>,
-            );
 
         });
         return shapeElements;

@@ -4,7 +4,7 @@ nav:
     path: /components
 ---
 
-## 绘图设计器
+## 流程设计器
 
 Demo:
 
@@ -40,6 +40,15 @@ export default () => {
                 y: 100,
                 width: 80,
                 height: 100,
+            }, {
+                type: 'Swimlane',
+                id: '4',
+                x: 400,
+                y: 100,
+                text: '流程设计器',
+                quantity: 3,
+                width: 500,
+                height: 300,
             },
         ],
     });

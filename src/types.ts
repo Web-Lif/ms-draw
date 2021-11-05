@@ -21,12 +21,13 @@ export interface Shape {
     width: number;
     fillStyle?: string;
     fill?: string;
-    type?: 'Circle' | 'Rect' | 'Rhombus';
+    type?: 'Circle' | 'Rect' | 'Rhombus' | 'Swimlane';
     text?: string
     transform?: {
         rotation: number
-    }
+    } 
     selectd?: boolean;
+    [name: string]: any
 }
 
 export interface DesignerData {

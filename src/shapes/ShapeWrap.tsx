@@ -23,6 +23,9 @@ const EditorStyle = styled.div`
 
 interface ShapeParam {
     shape: Shape
+    displayConnect?: boolean
+    external?: JSX.Element
+    readOnly?: boolean,
     onChange: (data: {
         x?: number,
         y?: number,
@@ -141,6 +144,9 @@ const Editor = forwardRef<Konva.Group, EditorProps>(({
 const ShapeWrap = ({
     shape,
     children,
+    readOnly,
+    external,
+    displayConnect = true,
     onChange,
     onClickConnectDown,
     onClickConnectUp,
@@ -185,26 +191,35 @@ const ShapeWrap = ({
   
     return (
         <>
-            <Editor
-                ref={editorRef}
-                shape={{
+            {readOnly ? (
+                <Editor
+                  ref={editorRef}
+                  shape={{
+                      ...shape,
+                      ...(tPosition || {})
+                  }}
+                  text={text}
+                  visible={isEditor}
+                  onBlur={() => {
+                      setIsEditor(false)
+                  }}
+                  onChange={(changeText) => {
+                      onChange?.({
+                          text: changeText
+                      })
+                  }}
+                  onDblClick={() => {
+                      setIsEditor(true)
+                  }}
+              />
+            ): null}
+            {external? cloneElement(external, {
+                ...external.props,
+                shape: {
                     ...shape,
                     ...(tPosition || {})
-                }}
-                text={text}
-                visible={isEditor}
-                onBlur={() => {
-                    setIsEditor(false)
-                }}
-                onChange={(changeText) => {
-                    onChange?.({
-                        text: changeText
-                    })
-                }}
-                onDblClick={() => {
-                    setIsEditor(true)
-                }}
-            />
+                }
+            }): null}
             <Group
                 x={x}
                 y={y}
@@ -249,6 +264,7 @@ const ShapeWrap = ({
                 <Transformer
                     visible={selectd}
                     ref={transformerRef}
+                    rotateEnabled={false}
                     boundBoxFunc={(oldBox, newBox) => {
                         // 限制最小的缩放
                         if (newBox.width < 5 || newBox.height < 5) {
@@ -290,7 +306,7 @@ const ShapeWrap = ({
                         })
                     }}
                 />
-                {renderConnectPoint().map((connect, index) => (
+                {displayConnect ? renderConnectPoint().map((connect, index) => (
                     <Circle
                         x={connect.x}
                         y={connect.y}
@@ -320,7 +336,7 @@ const ShapeWrap = ({
                             setHoverConnectPoint(false);
                         }}
                     />
-                ))}
+                )): null}
             </Group>
         </>
     );
