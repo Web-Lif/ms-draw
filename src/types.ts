@@ -23,6 +23,9 @@ export interface Shape {
     fill?: string;
     type?: 'Circle' | 'Rect' | 'Rhombus';
     text?: string
+    transform?: {
+        rotation: number
+    }
     selectd?: boolean;
 }
 

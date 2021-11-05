@@ -584,6 +584,7 @@ const Designer: FC<DesignerProps> = ({
         }
     };
 
+
     /**
      * 进行页面的缩放
      * @param scaleBy 缩放比例
@@ -607,60 +608,67 @@ const Designer: FC<DesignerProps> = ({
     };
 
     return (
-        <Container
-            tabIndex={-1}
-            ref={ref}
-            {...restProps}
-            onKeyDown={(e) => {
-                if (e.key === 'Delete') {
-                    data.arrows = data.arrows.filter((ele) => !ele.selectd);
-                    data.shape = data.shape.filter((ele) => !ele.selectd);
-                    onChange?.({ ...data });
-                }
-            }}
-        >
-            <Stage
-                ref={stageRef}
-                width={size.width}
-                height={size.height}
-                onMouseDown={onClickIdleAreaEvent}
-                onTouchStart={onClickIdleAreaEvent}
-                onMouseUp={() => {
-                    const arrowsTemp: ArrowType[] = []
-                    data.arrows.forEach((ele) => {
-                        if (ele.state === 'finish') {
-                            arrowsTemp.push(ele)
-                        } else if (ele.state === 'draw' && ele.target) {
-                            const target = ele.target
-                            if (((!Array.isArray(target) && ele.source.id !== target.id)) || Array.isArray(target)) {
-                                ele.state = 'finish'
-                                arrowsTemp.push(ele)
-                            }
-                        }
-                    })
-
-                    data.arrows = arrowsTemp
-                    onChange({ ...data });
-                }}
-                onMouseMove={(e) => {
-                    const { x, y } = e.target.getStage()!.getPointerPosition()!;
-                    data.arrows.forEach((ele) => {
-                        if (ele.state === 'draw') {
-                            ele.target = [x, y];
-                        }
-                    });
-                    onChange?.({ ...data });
-                }}
-                onWheel={(e) => {
-                    // zoom(1.03, e.evt.deltaY)
+        <>
+             <div style={{ width: 200}}>
+                <span> x: {stageRef.current?.getPointerPosition()?.x} </span>
+                <span> y: {stageRef.current?.getPointerPosition()?.y} </span>
+            </div>
+            <Container
+                tabIndex={-1}
+                ref={ref}
+                {...restProps}
+                onKeyDown={(e) => {
+                    if (e.key === 'Delete') {
+                        data.arrows = data.arrows.filter((ele) => !ele.selectd);
+                        data.shape = data.shape.filter((ele) => !ele.selectd);
+                        onChange?.({ ...data });
+                    }
                 }}
             >
-                <Layer ref={layerRef}>
-                    {arrowNodes}
-                    {shapesNodes}
-                </Layer>
-            </Stage>
-        </Container>
+            
+                <Stage
+                    ref={stageRef}
+                    width={size.width}
+                    height={size.height}
+                    onMouseDown={onClickIdleAreaEvent}
+                    onTouchStart={onClickIdleAreaEvent}
+                    onMouseUp={() => {
+                        const arrowsTemp: ArrowType[] = []
+                        data.arrows.forEach((ele) => {
+                            if (ele.state === 'finish') {
+                                arrowsTemp.push(ele)
+                            } else if (ele.state === 'draw' && ele.target) {
+                                const target = ele.target
+                                if (((!Array.isArray(target) && ele.source.id !== target.id)) || Array.isArray(target)) {
+                                    ele.state = 'finish'
+                                    arrowsTemp.push(ele)
+                                }
+                            }
+                        })
+
+                        data.arrows = arrowsTemp
+                        onChange({ ...data });
+                    }}
+                    onMouseMove={(e) => {
+                        const { x, y } = e.target.getStage()!.getPointerPosition()!;
+                        data.arrows.forEach((ele) => {
+                            if (ele.state === 'draw') {
+                                ele.target = [x, y];
+                            }
+                        });
+                        onChange?.({ ...data });
+                    }}
+                    onWheel={(e) => {
+                        // zoom(1.03, e.evt.deltaY)
+                    }}
+                >
+                    <Layer ref={layerRef}>
+                        {arrowNodes}
+                        {shapesNodes}
+                    </Layer>
+                </Stage>
+            </Container>
+        </>
     );
 };
 
